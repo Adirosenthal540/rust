@@ -162,8 +162,8 @@ impl IfThisChanged<'tcx> {
 impl Visitor<'tcx> for IfThisChanged<'tcx> {
     type Map = Map<'tcx>;
 
-    fn nested_visit_map<'this>(&'this mut self) -> NestedVisitorMap<'this, Self::Map> {
-        NestedVisitorMap::OnlyBodies(&self.tcx.hir())
+    fn nested_visit_map<'this>(&'this mut self) -> NestedVisitorMap<Self::Map> {
+        NestedVisitorMap::OnlyBodies(self.tcx.hir())
     }
 
     fn visit_item(&mut self, item: &'tcx hir::Item<'tcx>) {

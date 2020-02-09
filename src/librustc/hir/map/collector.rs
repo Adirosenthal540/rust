@@ -307,7 +307,7 @@ impl<'a, 'hir> Visitor<'hir> for NodeCollector<'a, 'hir> {
     /// deep walking so that we walk nested items in the context of
     /// their outer items.
 
-    fn nested_visit_map<'this>(&'this mut self) -> NestedVisitorMap<'this, Self::Map> {
+    fn nested_visit_map<'this>(&'this mut self) -> NestedVisitorMap<Self::Map> {
         panic!("`visit_nested_xxx` must be manually implemented in this visitor");
     }
 

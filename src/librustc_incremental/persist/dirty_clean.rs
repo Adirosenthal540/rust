@@ -549,8 +549,8 @@ impl FindAllAttrs<'tcx> {
 impl intravisit::Visitor<'tcx> for FindAllAttrs<'tcx> {
     type Map = Map<'tcx>;
 
-    fn nested_visit_map<'this>(&'this mut self) -> intravisit::NestedVisitorMap<'this, Self::Map> {
-        intravisit::NestedVisitorMap::All(&self.tcx.hir())
+    fn nested_visit_map<'this>(&'this mut self) -> intravisit::NestedVisitorMap<Self::Map> {
+        intravisit::NestedVisitorMap::All(self.tcx.hir())
     }
 
     fn visit_attribute(&mut self, attr: &'tcx Attribute) {
