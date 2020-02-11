@@ -11,7 +11,7 @@ use crate::ty::TyCtxt;
 use rustc_data_structures::fingerprint::Fingerprint;
 use rustc_data_structures::fx::FxHashMap;
 use rustc_data_structures::stable_hasher::{HashStable, StableHasher};
-use rustc_hir::def_id::LOCAL_CRATE;
+use rustc_hir::def_id::{DefId, LOCAL_CRATE};
 use rustc_hir::Body;
 use rustc_hir::HirId;
 use rustc_hir::ItemLocalId;
@@ -59,9 +59,17 @@ impl<'tcx> TyCtxt<'tcx> {
     pub fn hir(self) -> map::Map<'tcx> {
         map::Map { tcx: self }
     }
+
+    pub fn hir_id_parent_module(self, id: HirId) -> DefId {
+        self.parent_module(DefId::local(id.owner))
+    }
 }
 
 pub fn provide(providers: &mut Providers<'_>) {
+    providers.parent_module = |tcx, id| {
+        let hir = tcx.hir();
+        hir.get_module_parent(hir.as_local_hir_id(id).unwrap())
+    };
     providers.hir_crate = |tcx, _| tcx.untracked_crate;
     providers.index_hir = map::index_hir;
     providers.hir_module_items = |tcx, id| {
