@@ -6,7 +6,6 @@ pub use self::definitions::{
 use crate::hir::{HirOwner, HirOwnerItems};
 use crate::ty::query::Providers;
 use crate::ty::TyCtxt;
-use rustc_data_structures::fx::FxHashMap;
 use rustc_data_structures::svh::Svh;
 use rustc_hir::def::{DefKind, Res};
 use rustc_hir::def_id::{CrateNum, DefId, DefIndex, LocalDefId, LOCAL_CRATE};
@@ -139,9 +138,6 @@ pub struct IndexedHir<'hir> {
     pub crate_hash: Svh,
 
     pub(super) map: IndexVec<DefIndex, HirOwnerData<'hir>>,
-
-    /// The reverse mapping of `node_to_hir_id`.
-    pub(super) hir_to_node_id: FxHashMap<HirId, NodeId>,
 }
 
 #[derive(Copy, Clone)]
@@ -255,7 +251,7 @@ impl<'hir> Map<'hir> {
 
     #[inline]
     pub fn hir_to_node_id(&self, hir_id: HirId) -> NodeId {
-        self.tcx.index_hir(LOCAL_CRATE).hir_to_node_id[&hir_id]
+        self.tcx.definitions.hir_to_node_id(hir_id)
     }
 
     #[inline]
@@ -1038,25 +1034,11 @@ pub(super) fn index_hir<'tcx>(tcx: TyCtxt<'tcx>, cnum: CrateNum) -> &'tcx Indexe
 
     let _prof_timer = tcx.sess.prof.generic_activity("build_hir_map");
 
-    // Build the reverse mapping of `node_to_hir_id`.
-    let hir_to_node_id = tcx
-        .definitions
-        .node_to_hir_id
-        .iter_enumerated()
-        .map(|(node_id, &hir_id)| (hir_id, node_id))
-        .collect();
-
     let (map, crate_hash) = {
         let hcx = tcx.create_stable_hashing_context();
 
-        let mut collector = NodeCollector::root(
-            tcx.sess,
-            &**tcx.arena,
-            tcx.untracked_crate,
-            &tcx.definitions,
-            &hir_to_node_id,
-            hcx,
-        );
+        let mut collector =
+            NodeCollector::root(tcx.sess, &**tcx.arena, tcx.untracked_crate, &tcx.definitions, hcx);
         intravisit::walk_crate(&mut collector, tcx.untracked_crate);
 
         let crate_disambiguator = tcx.sess.local_crate_disambiguator();
@@ -1064,7 +1046,7 @@ pub(super) fn index_hir<'tcx>(tcx: TyCtxt<'tcx>, cnum: CrateNum) -> &'tcx Indexe
         collector.finalize_and_compute_crate_hash(crate_disambiguator, &*tcx.cstore, cmdline_args)
     };
 
-    let map = tcx.arena.alloc(IndexedHir { crate_hash, map, hir_to_node_id });
+    let map = tcx.arena.alloc(IndexedHir { crate_hash, map });
 
     map
 }
