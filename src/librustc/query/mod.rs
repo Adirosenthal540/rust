@@ -66,10 +66,12 @@ rustc_queries! {
         }
 
         query hir_owner(key: DefId) -> &'tcx HirOwner<'tcx> {
+            storage(caches::LocalDenseDefIdCacheSelector<&'tcx HirOwner<'tcx>>)
             eval_always
         }
 
         query hir_owner_items(key: DefId) -> &'tcx HirOwnerItems<'tcx> {
+            storage(caches::LocalDenseDefIdCacheSelector<&'tcx HirOwnerItems<'tcx>>)
             eval_always
         }
 
