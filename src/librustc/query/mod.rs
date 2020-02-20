@@ -55,6 +55,26 @@ rustc_queries! {
             desc { "get the crate HIR" }
         }
 
+        query index_hir(_: CrateNum) -> &'tcx map::IndexedHir<'tcx> {
+            eval_always
+            no_hash
+            desc { "index HIR" }
+        }
+
+        query hir_module_items(key: DefId) -> &'tcx hir::ModuleItems {
+            eval_always
+        }
+
+        query hir_owner(key: DefId) -> &'tcx HirOwner<'tcx> {
+            storage(caches::LocalDenseDefIdCacheSelector<&'tcx HirOwner<'tcx>>)
+            eval_always
+        }
+
+        query hir_owner_items(key: DefId) -> &'tcx HirOwnerItems<'tcx> {
+            storage(caches::LocalDenseDefIdCacheSelector<&'tcx HirOwnerItems<'tcx>>)
+            eval_always
+        }
+
         /// Records the type of every item.
         query type_of(key: DefId) -> Ty<'tcx> {
             cache_on_disk_if { key.is_local() }
@@ -97,6 +117,10 @@ rustc_queries! {
         query lint_levels(_: CrateNum) -> &'tcx LintLevelMap {
             eval_always
             desc { "computing the lint levels for items in this crate" }
+        }
+
+        query parent_module(_: DefId) -> DefId {
+            eval_always
         }
     }
 
@@ -654,6 +678,9 @@ rustc_queries! {
     }
 
     TypeChecking {
+        query all_local_trait_impls(key: CrateNum) -> &'tcx BTreeMap<DefId, Vec<hir::HirId>> {
+            desc { "local trait impls" }
+        }
         query trait_impls_of(key: DefId) -> &'tcx ty::trait_def::TraitImpls {
             desc { |tcx| "trait impls of `{}`", tcx.def_path_str(key) }
         }

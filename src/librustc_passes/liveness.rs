@@ -156,8 +156,8 @@ fn live_node_kind_to_string(lnk: LiveNodeKind, tcx: TyCtxt<'_>) -> String {
 impl<'tcx> Visitor<'tcx> for IrMaps<'tcx> {
     type Map = Map<'tcx>;
 
-    fn nested_visit_map(&mut self) -> NestedVisitorMap<'_, Self::Map> {
-        NestedVisitorMap::OnlyBodies(&self.tcx.hir())
+    fn nested_visit_map(&mut self) -> NestedVisitorMap<Self::Map> {
+        NestedVisitorMap::OnlyBodies(self.tcx.hir())
     }
 
     fn visit_fn(
@@ -1125,7 +1125,7 @@ impl<'a, 'tcx> Liveness<'a, 'tcx> {
             }
 
             hir::ExprKind::Call(ref f, ref args) => {
-                let m = self.ir.tcx.hir().get_module_parent(expr.hir_id);
+                let m = self.ir.tcx.hir_id_parent_module(expr.hir_id);
                 let succ = if self.ir.tcx.is_ty_uninhabited_from(m, self.tables.expr_ty(expr)) {
                     self.s.exit_ln
                 } else {
@@ -1136,7 +1136,7 @@ impl<'a, 'tcx> Liveness<'a, 'tcx> {
             }
 
             hir::ExprKind::MethodCall(.., ref args) => {
-                let m = self.ir.tcx.hir().get_module_parent(expr.hir_id);
+                let m = self.ir.tcx.hir_id_parent_module(expr.hir_id);
                 let succ = if self.ir.tcx.is_ty_uninhabited_from(m, self.tables.expr_ty(expr)) {
                     self.s.exit_ln
                 } else {
@@ -1361,7 +1361,7 @@ impl<'a, 'tcx> Liveness<'a, 'tcx> {
 impl<'a, 'tcx> Visitor<'tcx> for Liveness<'a, 'tcx> {
     type Map = Map<'tcx>;
 
-    fn nested_visit_map(&mut self) -> NestedVisitorMap<'_, Self::Map> {
+    fn nested_visit_map(&mut self) -> NestedVisitorMap<Self::Map> {
         NestedVisitorMap::None
     }
 

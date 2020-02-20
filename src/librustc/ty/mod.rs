@@ -302,9 +302,7 @@ impl Visibility {
                 Res::Err => Visibility::Public,
                 def => Visibility::Restricted(def.def_id()),
             },
-            hir::VisibilityKind::Inherited => {
-                Visibility::Restricted(tcx.hir().get_module_parent(id))
-            }
+            hir::VisibilityKind::Inherited => Visibility::Restricted(tcx.hir_id_parent_module(id)),
         }
     }
 
@@ -2994,7 +2992,7 @@ impl<'tcx> TyCtxt<'tcx> {
             Some(actual_expansion) => {
                 self.hir().definitions().parent_module_of_macro_def(actual_expansion)
             }
-            None => self.hir().get_module_parent(block),
+            None => self.hir_id_parent_module(block),
         };
         (ident, scope)
     }
@@ -3019,8 +3017,11 @@ pub fn provide(providers: &mut ty::query::Providers<'_>) {
     context::provide(providers);
     erase_regions::provide(providers);
     layout::provide(providers);
-    *providers =
-        ty::query::Providers { trait_impls_of: trait_def::trait_impls_of_provider, ..*providers };
+    *providers = ty::query::Providers {
+        trait_impls_of: trait_def::trait_impls_of_provider,
+        all_local_trait_impls: trait_def::all_local_trait_impls,
+        ..*providers
+    };
 }
 
 /// A map for the local crate mapping each type to a vector of its
